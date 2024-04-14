@@ -12,6 +12,7 @@ static void anim_size_cb(void * var, int32_t v)
 static void anim_opa_cb(void * var, int32_t v)
 {
     lv_obj_set_style_opa((lv_obj_t*)var, v, 0);
+    UIService::anim_set_current_val(v);
 }
 
 void UIService::init_screen()
@@ -49,7 +50,7 @@ void UIService::_init_controls()
     lv_obj_set_style_opa(ellipse, 255, 0);
     lv_obj_set_style_radius(ellipse, LV_RADIUS_CIRCLE, LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(ellipse, 0, LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ellipse, lv_color_hex(0xE32636), LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ellipse, lv_color_hex(0xFF0800), LV_STATE_DEFAULT);
     lv_obj_align(ellipse, LV_ALIGN_CENTER, 0, 0);
 
     lv_anim_init(a_ellipse = new lv_anim_t());
@@ -85,6 +86,7 @@ void UIService::_init_controls()
 
     hp_light_back = lv_obj_create(screen);
     lv_obj_set_size(hp_light_back, SCREEN_WIDTH, SCREEN_HEIGHT);
+    lv_obj_clear_flag(hp_light_back, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_align(hp_light_back, LV_ALIGN_LEFT_MID, 0, 0);
     lv_obj_set_style_radius(hp_light_back, 0, 0);
     lv_obj_set_style_border_width(hp_light_back, 0, 0);
@@ -113,9 +115,16 @@ void UIService::show_hp_control()
 
 }
 
-bool UIService::hp_control_set(int32_t max_val, int32_t curr_val, int32_t time_left_ms)
+void UIService::show_win_control()
 {
-    if (max_val <= 0 || curr_val <= 0 || time_left_ms <= 0)
+    lv_obj_set_width(hp_light_back, SCREEN_WIDTH);
+    lv_obj_align(stopwatch_light, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(hp_light_back, lv_color_hex(0x00FF00), 0);
+}
+
+bool UIService::hp_control_set(bool is_await, int32_t max_val, int32_t curr_val, int32_t time_left)
+{
+    if (is_await)
     {
         show_await_control();
         return false;
@@ -123,14 +132,27 @@ bool UIService::hp_control_set(int32_t max_val, int32_t curr_val, int32_t time_l
     else
         show_hp_control();  
 
+    lv_obj_set_style_bg_color(hp_light_back, lv_color_hex(0xFF6800), 0);
     lv_obj_set_width(hp_light_back, SCREEN_WIDTH * curr_val / max_val);
     lv_obj_align(stopwatch_light, LV_ALIGN_CENTER, (SCREEN_WIDTH - (SCREEN_WIDTH * curr_val / max_val)) / 2, 0);
     
-    std::string millis_str = std::to_string(static_cast<double_t>(time_left_ms) / 1000.0);
+    std::string millis_str = std::to_string(static_cast<double_t>(time_left) / 1000.0);
     millis_str = millis_str.substr(0, millis_str.find(".") + 2);
 
     lv_label_set_text(stopwatch_dark, millis_str.c_str());
     lv_label_set_text(stopwatch_light, millis_str.c_str());
 
     return true;
+}
+
+uint16_t UIService::_current_anim_val = 0;
+
+void UIService::anim_set_current_val(uint16_t val)
+{
+    UIService::_current_anim_val = val;
+}
+
+uint16_t UIService::anim_get_current_val()
+{
+    return UIService::_current_anim_val;
 }

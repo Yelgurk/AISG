@@ -1,6 +1,6 @@
 #include "../include/main.hpp"
 
-#define LED_SERVICE_TEST
+//#define LED_SERVICE_TEST
 
 void setup()
 {
@@ -8,6 +8,13 @@ void setup()
     Serial.println("LCD init...");
 
     Wire.begin(19, 20, 400000);
+
+    pinMode(HIT_SENSOR_DIGITAL_S_ESP_PIN, INPUT);
+    attachInterrupt(
+        HIT_SENSOR_DIGITAL_S_ESP_PIN,
+        [](){ hit_sensor_trigger = true; },
+        RISING
+    );
 
     UI.init_screen();
     pinMode(10, OUTPUT);
@@ -63,35 +70,36 @@ void setup()
     UI.show_hp_control();
 }
 
-uint32_t t1 = 0, t2 = 0, t3 = 0, t4 = 0, hp = 0;
-
 void loop()
 {
     lv_task_handler();
-    UI.hp_control_set(HP_max, HP_curr, HP_DEFAULT_TARGET_MS - (MS_curr = millis() - MS_old));
     LED.leds_task_handler();
-
-    hp++;
-    if (hp / 1000 % 2 == 0)
-        LED.led_hp_inline(1000, hp % 1000);
-    else
-        LED.led_hp_mirror(1000, hp % 1000);
-
-    t1 = millis() / 5000;
-    if (t1 != t2)
+    
+    if (hit_sensor_trigger)
     {
-        t2 = t1;
-        Serial.println("!!!");
+        TS.hit_detected();
         LED.leds_task_trigger_hit();
+        hit_sensor_trigger = false;
+    }
+    
+    if (TS.aim_task_handler())
+    {
+        UI.show_win_control();
+        LED.led_r_g_b_power(0x00FF00, 100);
+        LED.led_hp_mirror(TS.aim_max_hp(), 0);
+
+        for (uint32_t ms = millis(); millis() - ms < 5000;)
+            lv_task_handler();
+
+        LED.led_r_g_b_power(0x000000, 0);
+        hit_sensor_trigger = false;
     }
 
-    t3 = millis() / 60000;
-    HP_curr = hp % 1000;
-    if (t3 != t4)
-    {
-        HP_curr = hp = 1;
-        t4 = t3;
-        HP_max = 1000;
-        MS_old = MS_curr;
-    }
+    if (TS.is_await())
+        LED.led_r_g_b_power(0xFF0800, 100 * UI.anim_get_current_val() / 255);
+    else
+        LED.led_r_g_b_power(0x000000, 0);
+
+    UI.hp_control_set(TS.is_await(), TS.aim_max_hp(), TS.aim_curr_hp(), TS.time_left_ms());
+    LED.led_hp_mirror(TS.aim_max_hp(), TS.is_await() ? 0 : TS.aim_curr_hp());
 }

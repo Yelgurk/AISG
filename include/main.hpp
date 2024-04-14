@@ -2,16 +2,12 @@
 #include <Wire.h>
 #include "./UIService.hpp"
 #include "./LEDService.hpp"
+#include "./TaskService.hpp"
 
-#define HP_DEFAULT_TARGET_TASK  30
-#define HP_DEFAULT_TARGET_MS    40 * 1000
+#define HIT_SENSOR_DIGITAL_S_ESP_PIN    17
 
 UIService UI;
 LEDService LED;
+TaskService TS;        
 
-static int64_t
-    HP_max  = 0,
-    HP_curr = 0,
-    MS_old  = 0,
-    MS_curr = 0;
-        
+volatile bool hit_sensor_trigger = false;

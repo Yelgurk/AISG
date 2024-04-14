@@ -100,8 +100,8 @@ void LEDService::leds_task_add(function<bool()> func) {
 void LEDService::leds_task_handler()
 {
     MS_curr = millis();
-    if (!leds_task.empty())
-        if (leds_task.front()())
+    //if (!leds_task.empty())
+        while (!leds_task.empty() && leds_task.front()())
             leds_task.pop();
 }
 
@@ -110,7 +110,7 @@ void LEDService::leds_task_trigger_hit()
     leds_task_clear();
     
     for (int8_t p = LED_CORNER_SYNC_CNT - 1; p >= 0; p--)
-        for (uint8_t i = 0; i <= 100; i += 35)
+        for (uint8_t i = 0; i <= 100; i += 8)
             leds_task_add([this, p, i]() {
                 led_corner_sync()[p](i);
                 return true;

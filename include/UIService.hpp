@@ -24,6 +24,7 @@ private:
     void _hide_hp_control();
     void _stopwatchs_set_text();
     bool _is_await_control_act = false;
+    static uint16_t _current_anim_val;
 
 public:
     void init_screen();
@@ -38,10 +39,13 @@ public:
 
     lv_anim_t * a_ellipse;
 
-    uint16_t anim_curr_val();
     void show_await_control();
     void show_hp_control();
-    bool hp_control_set(int32_t max_val, int32_t curr_val, int32_t time_left);
+    void show_win_control();
+    bool hp_control_set(bool is_await, int32_t max_val = 0, int32_t curr_val = 0, int32_t time_left = 0);
+    
+    static void anim_set_current_val(uint16_t val);
+    uint16_t anim_get_current_val();
 };
 
 #endif
